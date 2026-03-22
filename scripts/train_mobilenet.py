@@ -13,6 +13,9 @@ from tensorflow.keras import layers
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import json
+from sklearn.metrics import classification_report, confusion_matrix
+import seaborn as sns
 
 TRAIN_DIR  = 'dataset/train'
 VAL_DIR    = 'dataset/val'
@@ -22,18 +25,30 @@ IMG_SIZE   = (224, 224)
 
 # ── GPU setup ─────────────────────────────────────────────────────────────────
 def setup_gpu():
-    gpus = tf.config.list_physical_devices('GPU')
-    if gpus:
-        try:
-            for gpu in gpus:
-                tf.config.experimental.set_memory_growth(gpu, True)
-            from tensorflow.keras import mixed_precision
-            mixed_precision.set_global_policy('mixed_float16')
-            print("RTX GPU: ENABLED (mixed_float16)")
-        except RuntimeError as e:
-            print(f"GPU setup error: {e}")
+    import platform
+    if platform.system() == 'Darwin':
+        # Apple Silicon Mac (M1/M2/M3/M4)
+        print("macOS detected. Checking for Metal Performance Shaders (MPS)...")
+        gpus = tf.config.list_physical_devices('GPU')
+        if gpus:
+            print(f"Apple Silicon GPU (Metal/MPS): ENABLED. Found {len(gpus)} GPU(s).")
+            # Note: memory_growth and mixed_float16 are generally unsupported or cause crashes on MPS.
+        else:
+            print("No GPU found — training on CPU (Consider installing tensorflow-metal if applicable)")
     else:
-        print("No GPU — training on CPU")
+        # Windows/Linux (e.g., RTX 4060)
+        gpus = tf.config.list_physical_devices('GPU')
+        if gpus:
+            try:
+                for gpu in gpus:
+                    tf.config.experimental.set_memory_growth(gpu, True)
+                from tensorflow.keras import mixed_precision
+                mixed_precision.set_global_policy('mixed_float16')
+                print("NVIDIA GPU: ENABLED (mixed_float16)")
+            except RuntimeError as e:
+                print(f"GPU setup error: {e}")
+        else:
+            print("No GPU — training on CPU")
 
 # ── Model ─────────────────────────────────────────────────────────────────────
 def build_model():
@@ -86,8 +101,14 @@ def main():
     ]
 
     # Stage 1 — frozen base
+    import platform
+    if platform.system() == 'Darwin':
+        opt1 = keras.optimizers.legacy.Adam(1e-3)
+    else:
+        opt1 = keras.optimizers.Adam(1e-3)
+
     model.compile(
-        optimizer=keras.optimizers.Adam(1e-3),
+        optimizer=opt1,
         loss='sparse_categorical_crossentropy',
         metrics=['accuracy'])
 
@@ -100,8 +121,13 @@ def main():
     for layer in base.layers[:-30]:
         layer.trainable = False
 
+    if platform.system() == 'Darwin':
+        opt2 = keras.optimizers.legacy.Adam(1e-4)
+    else:
+        opt2 = keras.optimizers.Adam(1e-4)
+
     model.compile(
-        optimizer=keras.optimizers.Adam(1e-4),
+        optimizer=opt2,
         loss='sparse_categorical_crossentropy',
         metrics=['accuracy'])
 
@@ -118,6 +144,54 @@ def main():
     ]:
         p = best.predict(x, verbose=0)[0]
         print(f"  {tag}: bad={p[0]:.4f}  good={p[1]:.4f}")
+
+    # ── Final Evaluation & Documentation ────────────────────────────────────────
+    print("\nGenerating final evaluation metrics on validation set...")
+    val_loss_eval, val_acc_eval = best.evaluate(val_ds, verbose=0)
+    y_pred_probs = best.predict(val_ds, verbose=0)
+    y_pred = np.argmax(y_pred_probs, axis=1)
+    y_true = np.concatenate([y for x, y in val_ds], axis=0)
+    
+    class_names = ['bad', 'good']
+    report_dict = classification_report(y_true, y_pred, target_names=class_names, output_dict=True)
+    report_str = classification_report(y_true, y_pred, target_names=class_names, digits=4)
+    cm = confusion_matrix(y_true, y_pred)
+    
+    print("\nClassification Report:")
+    print(report_str)
+    
+    # Save classification report
+    report_path = os.path.join(OUT_DIR, 'classification_report.txt')
+    with open(report_path, 'w') as f:
+        f.write("Validation Set Classification Report\n")
+        f.write("="*40 + "\n")
+        f.write(report_str)
+    print(f"Saved classification report: {report_path}")
+    
+    # Save evaluation scores JSON
+    scores_dict = {
+        'val_loss': float(val_loss_eval),
+        'val_accuracy': float(val_acc_eval),
+        'classification_report': report_dict,
+        'confusion_matrix': cm.tolist()
+    }
+    scores_path = os.path.join(OUT_DIR, 'evaluation_scores.json')
+    with open(scores_path, 'w') as f:
+        json.dump(scores_dict, f, indent=2)
+    print(f"Saved evaluation scores: {scores_path}")
+    
+    # Plot and save confusion matrix
+    plt.figure(figsize=(6, 5))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+                xticklabels=class_names, yticklabels=class_names)
+    plt.title('Confusion Matrix (Validation Set)')
+    plt.ylabel('True Label')
+    plt.xlabel('Predicted Label')
+    plt.tight_layout()
+    cm_path = os.path.join(OUT_DIR, 'confusion_matrix.png')
+    plt.savefig(cm_path, dpi=150)
+    plt.close()
+    print(f"Saved confusion matrix: {cm_path}")
 
     # ── Learning curve ────────────────────────────────────────────────────────
     acc     = hist1.history['accuracy']     + hist2.history['accuracy']
@@ -152,7 +226,7 @@ def main():
     plt.tight_layout()
     chart_path = os.path.join(OUT_DIR, 'learning_curve.png')
     plt.savefig(chart_path, dpi=150)
-    plt.show()
+    plt.close() # Close instead of show to prevent blocking
     print(f"Saved learning curve: {chart_path}")
     # ─────────────────────────────────────────────────────────────────────────
 

@@ -172,25 +172,26 @@ test_results/
 
 ## Step 8: Check Results
 
-After training completes, check the output:
+After training completes, check the output in the `models/` directory:
 
 ```
 models/
-├── best_model.h5           # Use this for deployment
-├── final_model.h5          # Final model
-├── model.tflite            # For Raspberry Pi
-├── training_history.png    # View accuracy/loss plots
-├── training_info.json      # Training metadata
-└── logs/                   # TensorBoard logs
+├── best_model.h5               # Use this for deployment
+├── best_model.keras            # Keras saved model format
+├── best_model.tflite           # For Raspberry Pi
+├── learning_curve.png          # View accuracy/loss plots
+├── confusion_matrix.png        # Validation confusion matrix
+├── classification_report.txt   # Detailed text report with scores
+└── evaluation_scores.json      # JSON file with metrics
 ```
 
 View the training plot:
-- Open `models/training_history.png`
+- Open `models/learning_curve.png`
 
-View TensorBoard:
-```bash
-tensorboard --logdir ./models/logs
-```
+View the evaluation scores:
+- Open `models/classification_report.txt`
+- Open `models/confusion_matrix.png`
+
 
 ## Complete Example Workflow
 

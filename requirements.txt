@@ -2,7 +2,7 @@
 
 # Image processing
 Pillow>=10.0.0
-pillow-heif>=1.3.0  # For iPhone HEIC format support
+pillow-heif>=1.1.1  # For iPhone HEIC format support
 
 # OpenCV for bean detection and cropping
 opencv-python>=4.8.0
