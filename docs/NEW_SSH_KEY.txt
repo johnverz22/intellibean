@@ -1,0 +1,32 @@
+========================================
+NEW SSH PUBLIC KEY FOR RASPBERRY PI
+========================================
+
+Copy this ENTIRE line (as ONE line, no breaks):
+
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOEr/s74YpCmaiZDCtoQwOH0i3lJSWFPWwf8MOlc3M6L intellibean-rpi
+
+========================================
+INSTRUCTIONS FOR RASPBERRY PI IMAGER
+========================================
+
+1. Open Raspberry Pi Imager
+2. Click the gear icon (⚙️) for Advanced Options
+3. Enable SSH
+4. Select "Allow public-key authentication only"
+5. Set username: intellibean
+6. Set password: Rpi5-HardwareDev26
+7. In "Set authorized_keys for 'intellibean':" field, paste the key above
+8. Make sure it's ONE continuous line with NO line breaks
+9. Flash the SD card
+
+========================================
+AFTER FLASHING
+========================================
+
+Test connection with:
+ssh -i C:\Users\USER\.ssh\id_ed25519_rpi intellibean@192.168.100.197
+
+Should connect without password!
+
+========================================

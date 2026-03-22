@@ -1,0 +1,48 @@
+========================================
+ENABLE SSH KEY AUTHENTICATION ON RASPBERRY PI
+========================================
+
+You are currently connected to the Raspberry Pi via SSH.
+Run these commands in that terminal:
+
+STEP 1: Edit SSH server configuration
+---------------------------------------------------
+sudo nano /etc/ssh/sshd_config
+
+
+STEP 2: Find and modify these lines (remove # if commented)
+---------------------------------------------------
+Look for these lines and make sure they are set to:
+
+PubkeyAuthentication yes
+AuthorizedKeysFile .ssh/authorized_keys
+
+If they have a # in front, remove it.
+If they say "no", change to "yes".
+
+
+STEP 3: Save and exit nano
+---------------------------------------------------
+Press: Ctrl+O (to save)
+Press: Enter (to confirm)
+Press: Ctrl+X (to exit)
+
+
+STEP 4: Restart SSH service
+---------------------------------------------------
+sudo systemctl restart ssh
+
+
+STEP 5: Verify SSH service is running
+---------------------------------------------------
+sudo systemctl status ssh
+
+
+========================================
+After completing these steps, SSH key authentication will work!
+========================================
+
+ALTERNATIVE: Quick one-liner to enable it
+---------------------------------------------------
+sudo sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config && sudo sed -i 's/PubkeyAuthentication no/PubkeyAuthentication yes/' /etc/ssh/sshd_config && sudo systemctl restart ssh
+

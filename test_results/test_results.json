@@ -1,0 +1,19 @@
+{
+  "test_loss": 0.3975789248943329,
+  "test_accuracy": 0.8547486066818237,
+  "confusion_matrix": [
+    [
+      169,
+      10
+    ],
+    [
+      42,
+      137
+    ]
+  ],
+  "class_labels": [
+    "bad",
+    "good"
+  ],
+  "total_samples": 358
+}

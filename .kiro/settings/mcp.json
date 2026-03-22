@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "raspberry-pi-ssh": {
+      "command": "uvx",
+      "args": ["mcp-server-ssh"],
+      "env": {
+        "SSH_HOST": "192.168.100.197",
+        "SSH_USER": "beans",
+        "SSH_KEY_PATH": "C:\\Users\\USER\\.ssh\\id_ed25519_rpi",
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      },
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}
